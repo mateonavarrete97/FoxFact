@@ -16,4 +16,10 @@ namespace FoxFact.DTO
         public decimal CantidadEC { get; set; }
         public decimal TarifaEC { get; set; }
     }
+    public class ExcedentesEnergiaTipoUnoDTO
+    {
+        public int IdService { get; set; }
+        public decimal EE1 { get; set;}
+        public decimal tarifaCUNegativa { get; set; }
+    }
 }

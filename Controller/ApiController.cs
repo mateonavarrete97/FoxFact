@@ -163,25 +163,117 @@ namespace FoxFact.Controller
         public async Task<IActionResult> GetComercializacionExcedentesEnergia(
         [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
         FunctionContext executionContext)
+        {
+            var logger = executionContext.GetLogger("GetComercializacionExcedentesEnergia");
+            logger.LogInformation("C# HTTP trigger function 'GetComercializacionExcedentesEnergia' processed a request.");
+
+            try
             {
-                var logger = executionContext.GetLogger("GetComercializacionExcedentesEnergia");
-                logger.LogInformation("C# HTTP trigger function 'GetComercializacionExcedentesEnergia' processed a request.");
+                string mesQuery = req.Query["mes"];
+                string yearQuery = req.Query["year"];
+
+                if (string.IsNullOrWhiteSpace(mesQuery) || string.IsNullOrWhiteSpace(yearQuery))
+                {
+                    logger.LogError("Faltan los parámetros 'mes' o 'year'.");
+                    return new BadRequestObjectResult("Los parámetros 'mes' y 'year' son obligatorios.");
+                }
+
+                if (!int.TryParse(mesQuery, out int mes) || !int.TryParse(yearQuery, out int year))
+                {
+                    logger.LogError("Los parámetros 'mes' y 'year' deben ser valores enteros.");
+                    return new BadRequestObjectResult("Los parámetros 'mes' y 'year' deben ser valores enteros.");
+                }
+
+                if (mes < 1 || mes > 12)
+                {
+                    logger.LogError("El parámetro 'mes' debe estar entre 1 y 12.");
+                    return new BadRequestObjectResult("El parámetro 'mes' debe estar entre 1 y 12.");
+                }
+
+                ApiManager apiManager = new ApiManager();
+                List<ComercializacionExcedentesEnergiaDTO> result = await apiManager.GetComercializacionExcedentesEnergia(mes, year);
+
+                return new OkObjectResult(result);
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogError($"Solicitud inválida: {ex.Message}");
+                return new BadRequestObjectResult($"Solicitud inválida: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error interno del servidor: {ex.Message}");
+                return new ObjectResult("Error interno del servidor.") { StatusCode = (int)HttpStatusCode.InternalServerError };
+            }
+        }
+        [Function("GetExcedentesEnergiaTipoUno")]
+        [OpenApiOperation(
+            operationId: nameof(GetExcedentesEnergiaTipoUno),
+            tags: new[] { "ExcedentesEnergia" },
+            Description = "Obtiene los datos de Excedentes de Energía Tipo 1 (EE1) para un mes, un año y un servicio específicos."
+        )]
+                [OpenApiParameter(
+            name: "mes",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+            Required = true,
+            Type = typeof(int),
+            Description = "El mes del cálculo (1-12)."
+        )]
+                [OpenApiParameter(
+            name: "year",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+            Required = true,
+            Type = typeof(int),
+            Description = "El año del cálculo."
+        )]
+                [OpenApiParameter(
+            name: "idservice",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+            Required = true,
+            Type = typeof(int),
+            Description = "El identificador del servicio."
+        )]
+                [OpenApiResponseWithBody(
+            HttpStatusCode.OK,
+            contentType: "application/json",
+            bodyType: typeof(List<ExcedentesEnergiaTipoUnoDTO>),
+            Description = "Lista con los datos de Excedentes de Energía Tipo 1."
+        )]
+                [OpenApiResponseWithBody(
+            HttpStatusCode.BadRequest,
+            contentType: "application/json",
+            bodyType: typeof(string),
+            Description = "Solicitud inválida debido a parámetros incorrectos o faltantes."
+        )]
+                [OpenApiResponseWithBody(
+            HttpStatusCode.InternalServerError,
+            contentType: "application/json",
+            bodyType: typeof(string),
+            Description = "Error interno del servidor."
+        )]
+            public async Task<IActionResult> GetExcedentesEnergiaTipoUno(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+        FunctionContext executionContext)
+            {
+                var logger = executionContext.GetLogger("GetExcedentesEnergiaTipoUno");
+                logger.LogInformation("C# HTTP trigger function 'GetExcedentesEnergiaTipoUno' processed a request.");
 
                 try
                 {
                     string mesQuery = req.Query["mes"];
                     string yearQuery = req.Query["year"];
+                    string idServiceQuery = req.Query["idservice"];
 
-                    if (string.IsNullOrWhiteSpace(mesQuery) || string.IsNullOrWhiteSpace(yearQuery))
+                    if (string.IsNullOrWhiteSpace(mesQuery) || string.IsNullOrWhiteSpace(yearQuery) || string.IsNullOrWhiteSpace(idServiceQuery))
                     {
-                        logger.LogError("Faltan los parámetros 'mes' o 'year'.");
-                        return new BadRequestObjectResult("Los parámetros 'mes' y 'year' son obligatorios.");
+                        logger.LogError("Faltan los parámetros 'mes', 'year' o 'idservice'.");
+                        return new BadRequestObjectResult("Los parámetros 'mes', 'year' y 'idservice' son obligatorios.");
                     }
 
-                    if (!int.TryParse(mesQuery, out int mes) || !int.TryParse(yearQuery, out int year))
+                    if (!int.TryParse(mesQuery, out int mes) || !int.TryParse(yearQuery, out int year) || !int.TryParse(idServiceQuery, out int idservice))
                     {
-                        logger.LogError("Los parámetros 'mes' y 'year' deben ser valores enteros.");
-                        return new BadRequestObjectResult("Los parámetros 'mes' y 'year' deben ser valores enteros.");
+                        logger.LogError("Los parámetros 'mes', 'year' e 'idservice' deben ser valores enteros.");
+                        return new BadRequestObjectResult("Los parámetros 'mes', 'year' e 'idservice' deben ser valores enteros.");
                     }
 
                     if (mes < 1 || mes > 12)
@@ -191,7 +283,7 @@ namespace FoxFact.Controller
                     }
 
                     ApiManager apiManager = new ApiManager();
-                    List<ComercializacionExcedentesEnergiaDTO> result = await apiManager.GetComercializacionExcedentesEnergia(mes, year);
+                    List<ExcedentesEnergiaTipoUnoDTO> result = await apiManager.ExcedentesEnergiaTipoUnoDAO(mes, year, idservice);
 
                     return new OkObjectResult(result);
                 }
