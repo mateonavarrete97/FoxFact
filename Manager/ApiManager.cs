@@ -17,13 +17,11 @@ namespace FoxFact.Manager
         {
             List<EnergiaActivaDTO> energiaActivaDTOs = new List<EnergiaActivaDTO>();
 
-            // Establece la conexión usando ConectPostgreSQLGet
             using (NpgsqlConnection npgsqlConnection = await ConectPostgreSQLGet.ConnAsync())
             {
                 using (NpgsqlCommand cmd = npgsqlConnection.CreateCommand())
                 {
                     ApiDAO apiDAO = new ApiDAO();
-                    // Llama al método DAO para obtener los datos
                     energiaActivaDTOs = await apiDAO.GetEnergiaActiva(cmd, mes, year);
                 }
             }

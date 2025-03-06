@@ -79,7 +79,6 @@ namespace FoxFact.Controller
 
             try
             {
-                // Obtener los valores de los headers
                 string yearHeader = input.Headers["year"];
                 string mesHeader = input.Headers["mes"];
 
@@ -89,42 +88,35 @@ namespace FoxFact.Controller
                     return new BadRequestObjectResult("Los headers 'year' y 'mes' son obligatorios.");
                 }
 
-                // Convertir los headers a enteros
                 if (!int.TryParse(yearHeader, out int year) || !int.TryParse(mesHeader, out int mes))
                 {
                     logger.LogError("Los valores de los headers 'year' y 'mes' deben ser enteros.");
                     return new BadRequestObjectResult("Los valores de los headers 'year' y 'mes' deben ser enteros.");
                 }
 
-                // Validar rangos de mes
                 if (mes < 1 || mes > 12)
                 {
                     logger.LogError("El valor de 'mes' debe estar entre 1 y 12.");
                     return new BadRequestObjectResult("El valor de 'mes' debe estar entre 1 y 12.");
                 }
 
-                // Llamar al manager con los valores de year y mes
                 ApiManager apiManager = new ApiManager();
                 List<EnergiaActivaDTO> result = await apiManager.GetEnergiaActiva(year, mes);
 
-                // Retornar un resultado exitoso
                 return new OkObjectResult(result);
             }
             catch (ArgumentException ex)
             {
-                // Manejo de errores específicos (como parámetros inválidos)
                 logger.LogError($"Bad request: {ex.Message}");
                 return new BadRequestObjectResult($"Solicitud inválida: {ex.Message}");
             }
             catch (UnauthorizedAccessException ex)
             {
-                // Manejo de errores de autorización
                 logger.LogError($"Unauthorized access: {ex.Message}");
                 return new UnauthorizedResult();
             }
             catch (Exception ex)
             {
-                // Manejo de errores generales
                 logger.LogError($"Internal server error: {ex.Message}");
                 return new ObjectResult("Error interno del servidor.") { StatusCode = (int)HttpStatusCode.InternalServerError };
             }
