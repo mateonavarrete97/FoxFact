@@ -13,62 +13,60 @@ namespace FoxFact.Manager
 {
     class ApiManager
     {
-        public async Task<List<EnergiaActivaDTO>> GetEnergiaActiva(int year, int mes)
+        public async Task<EnergiaActivaDTO> GetEnergiaActiva(int year, int mes, int idService)
         {
-            List<EnergiaActivaDTO> energiaActivaDTOs = new List<EnergiaActivaDTO>();
+            EnergiaActivaDTO energiaActivaDTO = new EnergiaActivaDTO();
 
             using (NpgsqlConnection npgsqlConnection = await ConectPostgreSQLGet.ConnAsync())
             {
                 using (NpgsqlCommand cmd = npgsqlConnection.CreateCommand())
                 {
                     ApiDAO apiDAO = new ApiDAO();
-                    energiaActivaDTOs = await apiDAO.GetEnergiaActiva(cmd, mes, year);
+                    energiaActivaDTO = await apiDAO.GetEnergiaActiva(cmd, mes, year, idService);
                 }
             }
+            if (energiaActivaDTO != null)
+            {
+                energiaActivaDTO.Monto = energiaActivaDTO.CantidadEA * energiaActivaDTO.TarifaEA;
+            }
 
-            return energiaActivaDTOs;
+            return energiaActivaDTO;
         }
-        public async Task<List<ComercializacionExcedentesEnergiaDTO>> GetComercializacionExcedentesEnergia(int mes, int year)
+        public async Task<ComercializacionExcedentesEnergiaDTO> GetComercializacionExcedentesEnergia(int mes, int year, int idService)
         {
-            List<ComercializacionExcedentesEnergiaDTO> comercializacionExcedentesEnergiaDTOs = new List<ComercializacionExcedentesEnergiaDTO>();
-            
             using (NpgsqlConnection npgsqlConnection = await ConectPostgreSQLGet.ConnAsync())
             {
                 using (NpgsqlCommand cmd = npgsqlConnection.CreateCommand())
                 {
                     ApiDAO apiDAO = new ApiDAO();
-                    comercializacionExcedentesEnergiaDTOs = await apiDAO.GetComercializacionExcedentesEnergia(cmd, mes, year);
+                    return await apiDAO.GetComercializacionExcedentesEnergia(cmd, mes, year, idService);
                 }
             }
-            return comercializacionExcedentesEnergiaDTOs;
         }
-        public async Task<List<ExcedentesEnergiaTipoUnoDTO>> ExcedentesEnergiaTipoUnoDAO(int mes, int year, int idservice)
-        {
-            List<ExcedentesEnergiaTipoUnoDTO> excedentesEnergiaTipoUnoDTOs = new List<ExcedentesEnergiaTipoUnoDTO>();
 
+        public async Task<ExcedentesEnergiaTipoUnoDTO> ExcedentesEnergiaTipoUnoDAO(int mes, int year, int idservice)
+        {
             using (NpgsqlConnection npgsqlConnection = await ConectPostgreSQLGet.ConnAsync())
             {
                 using (NpgsqlCommand cmd = npgsqlConnection.CreateCommand())
                 {
                     ApiDAO apiDAO = new ApiDAO();
-                    excedentesEnergiaTipoUnoDTOs = await apiDAO.ExcedentesEnergiaTipoUnoDAO(cmd, mes, year, idservice);
+                    return await apiDAO.ExcedentesEnergiaTipoUnoDAO(cmd, mes, year, idservice);
                 }
             }
-            return excedentesEnergiaTipoUnoDTOs;
         }
-        public async Task<List<ExcedentesEnergiaTipoDosDTO>> ExcedentesEnergiaTipoDosDAO(int mes, int year, int idService)
-        {
-            List<ExcedentesEnergiaTipoDosDTO> excedentesEnergiaTipoDosDTOs = new List<ExcedentesEnergiaTipoDosDTO>();
 
+        public async Task<ExcedentesEnergiaTipoDosDTO> ExcedentesEnergiaTipoDosDAO(int mes, int year, int idService)
+        {
             using (NpgsqlConnection npgsqlConnection = await ConectPostgreSQLGet.ConnAsync())
             {
                 using (NpgsqlCommand cmd = npgsqlConnection.CreateCommand())
                 {
                     ApiDAO apiDAO = new ApiDAO();
-                    excedentesEnergiaTipoDosDTOs = await apiDAO.ExcedentesEnergiaTipoDosDAO(cmd, mes, year, idService);
+                    return await apiDAO.ExcedentesEnergiaTipoDosDAO(cmd, mes, year, idService);
                 }
             }
-            return excedentesEnergiaTipoDosDTOs;
         }
+
     }
 }
