@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 
 namespace FoxFact.DTO
 {
-    class ApiDTO
-    {
-    }
     public class EnergiaActivaDTO
     {
         public decimal CantidadEA { get; set; }
         public decimal TarifaEA { get; set; }
+    }
+    public class ComercializacionExcedentesEnergiaDTO
+    {
+        public decimal CantidadEC { get; set; }
+        public decimal TarifaEC { get; set; }
     }
 }

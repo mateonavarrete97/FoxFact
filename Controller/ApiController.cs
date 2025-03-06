@@ -121,6 +121,92 @@ namespace FoxFact.Controller
                 return new ObjectResult("Error interno del servidor.") { StatusCode = (int)HttpStatusCode.InternalServerError };
             }
         }
+
+        [Function("GetComercializacionExcedentesEnergia")]
+        [OpenApiOperation(
+            operationId: nameof(GetComercializacionExcedentesEnergia),
+            tags: new[] { "ComercializacionExcedentesEnergia" },
+            Description = "Obtiene los datos de Comercialización de Excedentes de Energía para un mes y año específicos."
+        )]
+        [OpenApiParameter(
+            name: "mes",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+            Required = true,
+            Type = typeof(int),
+            Description = "El mes para el cálculo (1-12)."
+        )]
+        [OpenApiParameter(
+            name: "year",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Query,
+            Required = true,
+            Type = typeof(int),
+            Description = "El año para el cálculo."
+        )]
+        [OpenApiResponseWithBody(
+            HttpStatusCode.OK,
+            contentType: "application/json",
+            bodyType: typeof(List<ComercializacionExcedentesEnergiaDTO>),
+            Description = "Retorna una lista con los datos de comercialización de excedentes."
+        )]
+        [OpenApiResponseWithBody(
+            HttpStatusCode.BadRequest,
+            contentType: "application/json",
+            bodyType: typeof(string),
+            Description = "Solicitud inválida (parámetros incorrectos o faltantes)."
+        )]
+        [OpenApiResponseWithBody(
+            HttpStatusCode.InternalServerError,
+            contentType: "application/json",
+            bodyType: typeof(string),
+            Description = "Error interno del servidor."
+        )]
+        public async Task<IActionResult> GetComercializacionExcedentesEnergia(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+        FunctionContext executionContext)
+            {
+                var logger = executionContext.GetLogger("GetComercializacionExcedentesEnergia");
+                logger.LogInformation("C# HTTP trigger function 'GetComercializacionExcedentesEnergia' processed a request.");
+
+                try
+                {
+                    string mesQuery = req.Query["mes"];
+                    string yearQuery = req.Query["year"];
+
+                    if (string.IsNullOrWhiteSpace(mesQuery) || string.IsNullOrWhiteSpace(yearQuery))
+                    {
+                        logger.LogError("Faltan los parámetros 'mes' o 'year'.");
+                        return new BadRequestObjectResult("Los parámetros 'mes' y 'year' son obligatorios.");
+                    }
+
+                    if (!int.TryParse(mesQuery, out int mes) || !int.TryParse(yearQuery, out int year))
+                    {
+                        logger.LogError("Los parámetros 'mes' y 'year' deben ser valores enteros.");
+                        return new BadRequestObjectResult("Los parámetros 'mes' y 'year' deben ser valores enteros.");
+                    }
+
+                    if (mes < 1 || mes > 12)
+                    {
+                        logger.LogError("El parámetro 'mes' debe estar entre 1 y 12.");
+                        return new BadRequestObjectResult("El parámetro 'mes' debe estar entre 1 y 12.");
+                    }
+
+                    ApiManager apiManager = new ApiManager();
+                    List<ComercializacionExcedentesEnergiaDTO> result = await apiManager.GetComercializacionExcedentesEnergia(mes, year);
+
+                    return new OkObjectResult(result);
+                }
+                catch (ArgumentException ex)
+                {
+                    logger.LogError($"Solicitud inválida: {ex.Message}");
+                    return new BadRequestObjectResult($"Solicitud inválida: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Error interno del servidor: {ex.Message}");
+                    return new ObjectResult("Error interno del servidor.") { StatusCode = (int)HttpStatusCode.InternalServerError };
+                }
+            }
+
     }
 }
 

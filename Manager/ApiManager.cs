@@ -28,6 +28,20 @@ namespace FoxFact.Manager
 
             return energiaActivaDTOs;
         }
+        public async Task<List<ComercializacionExcedentesEnergiaDTO>> GetComercializacionExcedentesEnergia(int mes, int year)
+        {
+            List<ComercializacionExcedentesEnergiaDTO> comercializacionExcedentesEnergiaDTOs = new List<ComercializacionExcedentesEnergiaDTO>();
+            
+            using (NpgsqlConnection npgsqlConnection = await ConectPostgreSQLGet.ConnAsync())
+            {
+                using (NpgsqlCommand cmd = npgsqlConnection.CreateCommand())
+                {
+                    ApiDAO apiDAO = new ApiDAO();
+                    comercializacionExcedentesEnergiaDTOs = await apiDAO.GetComercializacionExcedentesEnergia(cmd, mes, year);
+                }
+            }
+            return comercializacionExcedentesEnergiaDTOs;
+        }
 
 
     }
