@@ -56,6 +56,19 @@ namespace FoxFact.Manager
             }
             return excedentesEnergiaTipoUnoDTOs;
         }
+        public async Task<List<ExcedentesEnergiaTipoDosDTO>> ExcedentesEnergiaTipoDosDAO(int mes, int year, int idService)
+        {
+            List<ExcedentesEnergiaTipoDosDTO> excedentesEnergiaTipoDosDTOs = new List<ExcedentesEnergiaTipoDosDTO>();
 
+            using (NpgsqlConnection npgsqlConnection = await ConectPostgreSQLGet.ConnAsync())
+            {
+                using (NpgsqlCommand cmd = npgsqlConnection.CreateCommand())
+                {
+                    ApiDAO apiDAO = new ApiDAO();
+                    excedentesEnergiaTipoDosDTOs = await apiDAO.ExcedentesEnergiaTipoDosDAO(cmd, mes, year, idService);
+                }
+            }
+            return excedentesEnergiaTipoDosDTOs;
+        }
     }
 }

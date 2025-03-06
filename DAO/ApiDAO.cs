@@ -83,7 +83,7 @@ namespace FoxFact.DAO
             return comercializacionExcedentesEnergiaDTOs;
         }
 
-        public async Task<List<ExcedentesEnergiaTipoUnoDTO>> ExcedentesEnergiaTipoUnoDAO(NpgsqlCommand cmd, int mes, int year, int idservice)
+        public async Task<List<ExcedentesEnergiaTipoUnoDTO>> ExcedentesEnergiaTipoUnoDAO(NpgsqlCommand cmd, int mes, int year, int idService)
         {
             List<ExcedentesEnergiaTipoUnoDTO> excedentesEnergiaTipoUnoDTOs = new List<ExcedentesEnergiaTipoUnoDTO>();
 
@@ -116,7 +116,7 @@ namespace FoxFact.DAO
             cmd.CommandText = query;
             cmd.Parameters.AddWithValue("@mes", mes);
             cmd.Parameters.AddWithValue("@year", year);
-            cmd.Parameters.AddWithValue("@idservice", idservice);
+            cmd.Parameters.AddWithValue("@idservice", idService);
 
             await using (var reader = await cmd.ExecuteReaderAsync())
             {
@@ -126,12 +126,73 @@ namespace FoxFact.DAO
 
                     excedentesEnergiaTipoUnoDTO.IdService = reader["id_service"] != DBNull.Value ? Convert.ToInt32(reader["id_service"]) : 0;
                     excedentesEnergiaTipoUnoDTO.EE1 = reader["EE1"] != DBNull.Value ? Convert.ToDecimal(reader["EE1"]) : 0;
-                    excedentesEnergiaTipoUnoDTO.tarifaCUNegativa = reader["tarifa_cu_negativa"] != DBNull.Value ? Convert.ToDecimal(reader["tarifa_cu_negativa"]) : 0;
+                    excedentesEnergiaTipoUnoDTO.TarifaCUNegativa = reader["tarifa_cu_negativa"] != DBNull.Value ? Convert.ToDecimal(reader["tarifa_cu_negativa"]) : 0;
 
                     excedentesEnergiaTipoUnoDTOs.Add(excedentesEnergiaTipoUnoDTO);
                 }
             }
             return excedentesEnergiaTipoUnoDTOs;
+        }
+        public async Task<List<ExcedentesEnergiaTipoDosDTO>> ExcedentesEnergiaTipoDosDAO(NpgsqlCommand cmd, int mes, int year, int idService)
+        {
+            List<ExcedentesEnergiaTipoDosDTO> excedentesEnergiaTipoDosDTOs = new List<ExcedentesEnergiaTipoDosDTO>();
+
+            cmd.CommandType = CommandType.Text;
+            cmd.Parameters.Clear();
+
+            string query = @"WITH hourly_data AS (
+                            SELECT 
+                            r.id_service,
+                            r.record_timestamp,
+                            COALESCE(i.value, 0) AS injection_value,
+                            COALESCE(c.value, 0) AS consumption_value,
+                            x.value AS hourly_tariff
+                            FROM records r
+                            LEFT JOIN injection i ON r.id_record = i.id_record
+                            LEFT JOIN consumption c ON r.id_record = c.id_record
+                            LEFT JOIN xm_data_hourly_per_agent x ON r.record_timestamp = x.record_timestamp
+                            WHERE EXTRACT(YEAR FROM r.record_timestamp) = @year
+                            AND EXTRACT(MONTH FROM r.record_timestamp) = @mes
+                            AND r.id_service = @idservice
+                            ),
+                            excess_energy AS (
+                            SELECT 
+                            id_service,
+                            record_timestamp,
+                            CASE 
+                            WHEN injection_value > consumption_value THEN injection_value - consumption_value
+                            ELSE 0 
+                            END AS EE2_hourly,
+                            hourly_tariff
+                            FROM hourly_data
+                            )
+                            SELECT 
+                            id_service,
+                            SUM(EE2_hourly) AS total_EE2,
+                            SUM(EE2_hourly * hourly_tariff) AS total_tariff_cost
+                            FROM excess_energy
+                            GROUP BY id_service;
+                            ";
+
+            cmd.CommandText = query;
+            cmd.Parameters.AddWithValue("@mes", mes);
+            cmd.Parameters.AddWithValue("@year", year);
+            cmd.Parameters.AddWithValue("@idservice", idService);
+
+            await using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                while (reader.Read())
+                {
+                    ExcedentesEnergiaTipoDosDTO excedentesEnergiaTipoDosDTO = new ExcedentesEnergiaTipoDosDTO();
+
+                    excedentesEnergiaTipoDosDTO.IdService = reader["id_service"] != DBNull.Value ? Convert.ToInt32(reader["id_service"]) : 0;
+                    excedentesEnergiaTipoDosDTO.EE2 = reader["total_EE2"] != DBNull.Value ? Convert.ToDecimal(reader["total_EE2"]) : 0;
+                    excedentesEnergiaTipoDosDTO.TotalTariffCost = reader["total_tariff_cost"] != DBNull.Value ? Convert.ToDecimal(reader["total_tariff_cost"]) : 0;
+
+                    excedentesEnergiaTipoDosDTOs.Add(excedentesEnergiaTipoDosDTO);
+                }
+            }
+            return excedentesEnergiaTipoDosDTOs;
         }
     }
 }
